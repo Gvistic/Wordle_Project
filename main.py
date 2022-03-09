@@ -1,11 +1,13 @@
 import arcade
 import arcade.gui
+import random
 
 # Constants
 WINDOW_WIDTH = 500
 WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Wordle - Created in Python by Dylan James"
 PRIMARY_BACK_GROUND_COLOR = arcade.color.DARK_SLATE_BLUE
+SECONDARY_BACK_GROUND_COLOR = arcade.color.SAND
 
 
 class MenuView(arcade.View):
@@ -80,10 +82,26 @@ class WordleView(arcade.View):
         self.column = 1
         self.current = "a1"
 
+        f = open("words.txt", 'r')
+        self.word = str(random_line(f)).strip().lower()
+        print(self.word)
+        f.close()
+
+        self.game_active = True
+
+        self.words = []
+        with open("words.txt", 'r') as file:
+            for line in file:
+                self.words.append(line.strip().lower())
+
         # Background color
-        arcade.set_background_color(arcade.color.GOLD)
+        arcade.set_background_color(SECONDARY_BACK_GROUND_COLOR)
         self.normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue_pressed.png")
         self.pressed_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue.png")
+        self.green_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_green.png")
+        self.yellow_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_yellow.png")
+        self.blue_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue2.png")
+        self.gray_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_gray.png")
 
         # Create a vertical BoxGroup to align buttons
         self.v_box = arcade.gui.UIBoxLayout()
@@ -96,7 +114,7 @@ class WordleView(arcade.View):
 
         # Create the buttons
         # A
-        self.a1 = arcade.gui.UITextureButton(text="", width=40, height=45, texture=self.normal_button_texture)
+        self.a1 = arcade.gui.UITextureButton(width=40, height=45, texture=self.normal_button_texture)
         self.h_box1.add(self.a1.with_space_around(left=10, right=10))
 
         self.a2 = arcade.gui.UITextureButton(text="", width=40, height=45, texture=self.normal_button_texture)
@@ -207,6 +225,34 @@ class WordleView(arcade.View):
 
         self.v_box.add(self.h_box6.with_space_around(bottom=10))
 
+        self.game_messages = arcade.gui.UILabel(text="Game Messages:", width=100, height=100,
+                                                text_color=arcade.color.BLUE)
+        self.v_box.add(self.game_messages.with_space_around(top=20, bottom=20))
+        self.game_messages.fit_content()
+
+        self.restart_button = arcade.gui.UIFlatButton(text="Restart", width=150)
+        self.v_box.add(self.restart_button)
+
+        # @restart_button.event("on_click")
+        @self.restart_button.event("on_click")
+        def on_click_restart(event):
+            if event:
+                for row in range(1, 7):
+                    for column in range(1, 6):
+                        button = self.get_button_object(row, column)
+                        button.text = ""
+                        button.texture = self.normal_button_texture
+
+                words_file = open("words.txt", 'r')
+                self.word = str(random_line(words_file)).strip().lower()
+                print(self.word)
+                f.close()
+                self.row = 1
+                self.column = 1
+                self.game_active = True
+
+                self.set_message_text("Game Messages:")
+
         self.manager.add(
             arcade.gui.UIAnchorWidget(
                 anchor_x="center_x",
@@ -226,41 +272,40 @@ class WordleView(arcade.View):
         self.manager.draw()
 
     def next_button(self):
-        if self.column >= 5 and self.row < 6:
-            self.row += 1
-            self.column = 1
-        elif self.row <= 6 and self.column < 5:
+        if self.column + 1 <= 6:
             self.column += 1
-        else:
-            self.column = 1
-            self.row = 1
 
     def previous_button(self):
-        if self.column == 5:
-            self.row -= 1
-        if self.column - 1 > 1:
+        if self.column - 1 >= 1:
             self.column -= 1
-        else:
-            self.column = 1
-        self.set_text("", False)
+            self.set_text("", False)
 
-    def set_text(self, text, pressed):
+    def get_button_object(self, row, column):
         x = "a"
-        if self.row == 1:
+        if row == 1:
             x = "a"
-        elif self.row == 2:
+        elif row == 2:
             x = "b"
-        elif self.row == 3:
+        elif row == 3:
             x = "c"
-        elif self.row == 4:
+        elif row == 4:
             x = "d"
-        elif self.row == 5:
+        elif row == 5:
             x = "e"
-        elif self.row == 6:
+        elif row == 6:
             x = "f"
 
-        button_name = x + str(self.column)
-        button = getattr(self, button_name)
+        button_name = x + str(column)
+        try:
+            button = getattr(self, button_name)
+            return button
+        except AttributeError:
+            return False
+
+    def set_text(self, text, pressed):
+        if not self.get_button_object(self.row, self.column):
+            return
+        button = self.get_button_object(self.row, self.column)
         button.text = str(text)
         if pressed:
             button.texture = self.pressed_button_texture
@@ -268,15 +313,70 @@ class WordleView(arcade.View):
             button.texture = self.normal_button_texture
             button.trigger_full_render()
 
+    def set_message_text(self, text):
+        self.game_messages.text = text
+        self.game_messages.fit_content()
+
+    def parse_row(self):
+        if not self.column == 6:
+            return
+        word = ""
+        buttons = []
+        for column in range(1, 6):
+            button = self.get_button_object(self.row, column)
+            word += button.text
+            buttons.append(button)
+        if word not in self.words:
+            self.set_message_text("Game Messages: Word not in list")
+            return
+        if word == self.word:
+            for button in buttons:
+                button.texture = self.green_normal_button_texture
+                button.trigger_full_render()
+            self.set_message_text("Game Messages: Correct!")
+            self.game_active = False
+            return
+        index = 0
+        for letter in word:
+            if letter in self.word:
+                indices = [i for i in range(len(self.word)) if self.word[i] == letter]
+                if index in indices:
+                    buttons[index].texture = self.green_normal_button_texture
+                else:
+                    buttons[index].texture = self.blue_normal_button_texture
+            else:
+                buttons[index].texture = self.gray_normal_button_texture
+            index += 1
+        self.set_message_text("Game Messages:")
+
+        self.row = self.row + 1
+        self.column = 1
+
+        if self.row == 7:
+            self.game_active = False
+            self.set_message_text("Game Messages: Game Over!")
+
     def on_key_press(self, key, _modifiers):
-        if 97 <= key <= 122:
-            self.set_text(chr(key), True)
-            self.next_button()
-        if key == 65288:
-            self.previous_button()
+        if self.game_active:
+            if 97 <= key <= 122:
+                self.set_text(chr(key), True)
+                self.next_button()
+            if key == 65288:
+                self.previous_button()
+            if key == 65293:
+                self.parse_row()
 
     def on_hide_view(self):
         self.manager.disable()
+
+
+def random_line(file):
+    line = next(file)
+    for num, aline in enumerate(file, 2):
+        if random.randrange(num):
+            continue
+        line = aline
+    return line
 
 
 def main():
