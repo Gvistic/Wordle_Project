@@ -447,7 +447,6 @@ biped
 birch
 birth
 bison
-bitch
 biter
 bitty
 Bizet
@@ -1436,7 +1435,6 @@ facia
 faded
 faery
 Fagin
-fagot
 faint
 fairy
 Faith
@@ -2884,7 +2882,6 @@ ngwee
 niche
 niece
 nifty
-Niger
 night
 Nihon
 Niles
