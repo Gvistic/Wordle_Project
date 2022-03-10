@@ -106,10 +106,9 @@ class WordleView(arcade.View):
         arcade.set_background_color(secondary_back_ground_color)
         self.normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue_pressed.png")
         self.pressed_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue.png")
-        self.green_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_green.png")
-        self.yellow_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_yellow.png")
-        self.blue_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue2.png")
-        self.gray_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_gray.png")
+        self.green_normal_button_texture = arcade.load_texture("project_resources/button_square_green.png")
+        self.blue_normal_button_texture = arcade.load_texture("project_resources/button_square_blue2.png")
+        self.gray_normal_button_texture = arcade.load_texture("project_resources/button_square_gray.png")
 
         # Create a vertical BoxGroup to align buttons
         self.v_box = arcade.gui.UIBoxLayout()
