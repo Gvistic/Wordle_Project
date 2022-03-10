@@ -7,11 +7,15 @@ WINDOW_WIDTH = 500
 WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Wordle - Created in Python by Dylan James"
 PRIMARY_BACK_GROUND_COLOR = arcade.color.DARK_SLATE_BLUE
-SECONDARY_BACK_GROUND_COLOR = arcade.color.SAND
+
+secondary_back_ground_color = arcade.color.SAND
 
 
 class MenuView(arcade.View):
     def set_mouse_platform_visible(self, platform_visible=None):
+        pass
+
+    def setup(self):
         pass
 
     def __init__(self):
@@ -46,7 +50,10 @@ class MenuView(arcade.View):
 
         @settings_button.event("on_click")
         def on_click_settings(event):
-            print("Settings:", event)
+            if event:
+                settings_view = SettingView()
+                settings_view.setup()
+                self.window.show_view(settings_view)
 
         @quit_button.event("on_click")
         def on_click_exit(event):
@@ -84,7 +91,7 @@ class WordleView(arcade.View):
 
         f = open("words.txt", 'r')
         self.word = str(random_line(f)).strip().lower()
-        print(self.word)
+        # print(self.word)
         f.close()
 
         self.game_active = True
@@ -95,7 +102,8 @@ class WordleView(arcade.View):
                 self.words.append(line.strip().lower())
 
         # Background color
-        arcade.set_background_color(SECONDARY_BACK_GROUND_COLOR)
+        global secondary_back_ground_color
+        arcade.set_background_color(secondary_back_ground_color)
         self.normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue_pressed.png")
         self.pressed_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_blue.png")
         self.green_normal_button_texture = arcade.load_texture(":resources:gui_basic_assets/button_square_green.png")
@@ -226,12 +234,15 @@ class WordleView(arcade.View):
         self.v_box.add(self.h_box6.with_space_around(bottom=10))
 
         self.game_messages = arcade.gui.UILabel(text="Game Messages:", width=100, height=100,
-                                                text_color=arcade.color.BLUE)
+                                                text_color=arcade.color.BLUE, bold=True)
         self.v_box.add(self.game_messages.with_space_around(top=20, bottom=20))
         self.game_messages.fit_content()
 
-        self.restart_button = arcade.gui.UIFlatButton(text="Restart", width=150)
-        self.v_box.add(self.restart_button)
+        self.restart_button = arcade.gui.UIFlatButton(text="Restart", width=150, height=50)
+        self.v_box.add(self.restart_button.with_space_around(bottom=10))
+
+        self.back_button = arcade.gui.UIFlatButton(text="Main Menu", width=150, height=50)
+        self.v_box.add(self.back_button)
 
         # @restart_button.event("on_click")
         @self.restart_button.event("on_click")
@@ -252,6 +263,13 @@ class WordleView(arcade.View):
                 self.game_active = True
 
                 self.set_message_text("Game Messages:")
+
+        @self.back_button.event("on_click")
+        def on_click_back(event):
+            if event:
+                menu_view = MenuView()
+                menu_view.setup()
+                self.window.show_view(menu_view)
 
         self.manager.add(
             arcade.gui.UIAnchorWidget(
@@ -365,6 +383,74 @@ class WordleView(arcade.View):
                 self.previous_button()
             if key == 65293:
                 self.parse_row()
+
+    def on_hide_view(self):
+        self.manager.disable()
+
+
+class SettingView(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+        # UI manager
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # Background color
+        arcade.set_background_color(PRIMARY_BACK_GROUND_COLOR)
+
+        # Create a vertical BoxGroup to align buttons
+        self.v_box = arcade.gui.UIBoxLayout()
+
+        self.dark_mode = False
+        self.dark_mode_button = arcade.gui.UIFlatButton(text="Enable Dark Mode", width=150)
+        self.back_button = arcade.gui.UIFlatButton(text="Back", width=150)
+        self.v_box.add(self.dark_mode_button)
+        self.v_box.add(self.back_button.with_space_around(top=20))
+
+        global secondary_back_ground_color
+        if secondary_back_ground_color == arcade.color.BLACK:
+            self.dark_mode = True
+            self.dark_mode_button.text = "Disable Dark Mode"
+
+        @self.dark_mode_button.event("on_click")
+        def on_click_dark_mode(event):
+            if event:
+                global secondary_back_ground_color
+                if not self.dark_mode:
+                    self.dark_mode = True
+                    self.dark_mode_button.text = "Disable Dark Mode"
+                    secondary_back_ground_color = arcade.color.BLACK
+                else:
+                    self.dark_mode = False
+                    self.dark_mode_button.text = "Enable Dark Mode"
+                    secondary_back_ground_color = arcade.color.SAND
+
+        @self.back_button.event("on_click")
+        def on_click_back(event):
+            if event:
+                menu_view = MenuView()
+                menu_view.setup()
+                self.window.show_view(menu_view)
+
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                child=self.v_box)
+        )
+
+    def setup(self):
+
+        pass
+
+    def on_show(self):
+        """ Called when switching to this view"""
+        # arcade.set_background_color(arcade.color.ORANGE_PEEL)
+
+    def on_draw(self):
+        self.clear()
+        self.manager.draw()
 
     def on_hide_view(self):
         self.manager.disable()
